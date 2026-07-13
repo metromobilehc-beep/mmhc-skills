@@ -32,6 +32,12 @@ const DISCIPLINES = {
       "Able to effectively teach adult learners",
       "Able to evaluate effectiveness of teaching",
       "Utilizes appropriate teaching material as determined by patient needs",
+      "Understands/implements specific protocols for hip surgeries",
+      "Understands/implements specific protocols for knee surgeries",
+      "Understands/implements specific protocols for shoulder surgeries",
+      "Understands/implements specific protocols for spinal surgeries",
+      "Understands/implements specific protocols for ORIF surgeries",
+      "Understands/implements specific protocols for other surgery (specify): ______________",
       "Utilizes appropriate standardized assessments and interprets results",
       "Knowledge of and demonstrates basic techniques of home PT/INR, including verbalization of the purpose of the test, proper specimen collection and preservation",
       "Properly disposes of lancet in a puncture proof container",
@@ -64,6 +70,12 @@ const DISCIPLINES = {
       "Able to effectively teach adult learners",
       "Able to evaluate effectiveness of teaching",
       "Utilizes appropriate teaching material as determined by patient needs",
+      "Understands/implements specific protocols for hip surgeries",
+      "Understands/implements specific protocols for knee surgeries",
+      "Understands/implements specific protocols for shoulder surgeries",
+      "Understands/implements specific protocols for spinal surgeries",
+      "Understands/implements specific protocols for ORIF surgeries",
+      "Understands/implements specific protocols for other surgery (specify): ______________",
       "Utilizes appropriate standardized assessments and interprets results",
       "Teaches ADLs/IADLs to patient/caregiver",
       "Other: ______________"
@@ -90,9 +102,21 @@ const DISCIPLINES = {
       "Able to determine the learning needs of patient/caregiver",
       "Able to effectively teach adult learners",
       "Able to evaluate effectiveness of teaching and teach back response",
+      "Utilizes appropriate teaching material as determined by patient needs",
+      "Understands/implements specific protocols for hip surgeries",
+      "Understands/implements specific protocols for knee surgeries",
+      "Understands/implements specific protocols for shoulder surgeries",
+      "Understands/implements specific protocols for spinal surgeries",
+      "Understands/implements specific protocols for ORIF surgeries",
+      "Understands/implements specific protocols for other surgery (specify): ______________",
       "Utilizes appropriate standardized assessments and interprets results",
       "Teaches ADLs/IADLs for patient/caregiver",
-         ]
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________"
+    ]
   },
   PTA: {
     label: "PTA",
@@ -123,7 +147,11 @@ const DISCIPLINES = {
       "Understands/implements specific protocols for ORIF surgeries",
       "Understands/implements specific protocols for other surgery (specify): ______________",
       "Utilizes appropriate standardized assessments and interprets results",
-     ]
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________"
+    ]
   }
 };
 
@@ -165,9 +193,14 @@ const CAR_STOCK_ITEMS = [
   "Gown/Mask/Gloves",
   "Biohazard Bags & Specimen bags",
   "Trash Bags - Minimum of 4",
+  "Optional - Zip Lock Bags - Gallon size",
   "Expired Supplies",
   "Car Dirty Area - Maintains a designated dirty area ensuring proper containment, disposal, and compliance with infection control protocols",
-  ];
+  "Sharps Container - Do Not exceed 3/4 full",
+  "Insulated Specimen Container w/ Biohazard Labels & Ice Pack (soft container must have hard/leak-proof insert with lid)",
+  "Other: ______________",
+  "Other: ______________"
+];
 
 // Shared: PPE Competency (Section C)
 const PPE_ITEMS = [

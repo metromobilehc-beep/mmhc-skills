@@ -1,3 +1,31 @@
+// ---------- LOCAL PERSISTENCE ----------
+// Auto-saves edits (removed/reworded/added items) to this browser so a
+// refresh doesn't lose work-in-progress. Does NOT sync across devices —
+// use the Export button to make edits the permanent default for everyone.
+const STORAGE_PREFIX = "mmhc_competency_v1_";
+
+function saveState(key, state) {
+  try { localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(state)); } catch (e) {}
+}
+function loadState(key) {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function storageKeyFor(prefix) {
+  return prefix === "A" ? `A_${currentDiscipline}` : prefix;
+}
+function persistSection(prefix) {
+  syncStateFromDOM(prefix);
+  saveState(storageKeyFor(prefix), getState(prefix));
+}
+let saveDebounceTimer = null;
+function persistSectionDebounced(prefix) {
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(() => persistSection(prefix), 400);
+}
+
 // ---------- UI RENDERING ----------
 let currentDiscipline = "PT";
 
@@ -9,7 +37,7 @@ function renderDisciplineTabs() {
     btn.textContent = key;
     btn.className = key === currentDiscipline ? "active" : "";
     btn.onclick = () => {
-      if (sectionRegistry["A"]) syncStateFromDOM("A");
+      if (sectionRegistry["A"]) persistSection("A");
       currentDiscipline = key;
       renderAll();
     };
@@ -36,6 +64,24 @@ function escapeHtml(s) {
   return (s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
+
+document.addEventListener("input", (e) => {
+  if (e.target.matches("textarea.item-edit")) {
+    autoResize(e.target);
+    persistSectionDebounced(e.target.dataset.key);
+  }
+});
+document.addEventListener("change", (e) => {
+  if (e.target.matches('.radiogrp input[type="radio"]')) {
+    const prefix = e.target.name.split("_")[0];
+    persistSectionDebounced(prefix);
+  }
+});
+
 function freshState(items) {
   return items.map(t => ({ text: t, include: true, selected: "" }));
 }
@@ -54,7 +100,7 @@ function syncStateFromDOM(prefix) {
     if (!item.include) return;
     const sel = getRadioValue(`${prefix}_${idx}`);
     if (sel) item.selected = sel;
-    const inp = document.querySelector(`input.item-edit[data-key="${prefix}"][data-idx="${idx}"]`);
+    const inp = document.querySelector(`textarea.item-edit[data-key="${prefix}"][data-idx="${idx}"]`);
     if (inp) item.text = inp.value;
   });
 }
@@ -70,7 +116,7 @@ function renderSection(prefix) {
     tr.innerHTML = `
       <td class="item-text">
         <div class="item-row-controls">
-          <input type="text" class="item-edit" data-key="${prefix}" data-idx="${idx}" value="${escapeHtml(item.text)}">
+          <textarea class="item-edit" data-key="${prefix}" data-idx="${idx}" rows="1">${escapeHtml(item.text)}</textarea>
           <button type="button" class="removeBtn" data-key="${prefix}" data-idx="${idx}" title="Not applicable / remove">✕</button>
         </div>
       </td>
@@ -78,6 +124,8 @@ function renderSection(prefix) {
     `;
     tbody.appendChild(tr);
   });
+
+  tbody.querySelectorAll("textarea.item-edit").forEach(autoResize);
 
   const toolsEl = document.getElementById(s.toolsId);
   const removedItems = s.state.map((item, idx) => ({ item, idx })).filter(x => !x.item.include);
@@ -102,16 +150,19 @@ document.addEventListener("click", (e) => {
     syncStateFromDOM(key);
     getState(key)[+idx].include = false;
     renderSection(key);
+    persistSection(key);
   } else if (restoreBtn) {
     const { key, idx } = restoreBtn.dataset;
     syncStateFromDOM(key);
     getState(key)[+idx].include = true;
     renderSection(key);
+    persistSection(key);
   } else if (addBtn) {
     const key = addBtn.dataset.key;
     syncStateFromDOM(key);
     getState(key).push({ text: "", include: true, selected: "" });
     renderSection(key);
+    persistSection(key);
   }
 });
 
@@ -126,15 +177,15 @@ function renderAll() {
   // Register (once) all non-discipline-specific sections
   if (!sectionRegistry["B1"]) {
     registerSection("B1", "itemsBodyB1", "toolsB1", RESULT_OPTIONS_MET);
-    sectionRegistry["B1"].state = freshState(OBSERVATION_ITEMS);
+    sectionRegistry["B1"].state = loadState("B1") || freshState(OBSERVATION_ITEMS);
     registerSection("B2", "itemsBodyB2", "toolsB2", RESULT_OPTIONS_MET);
-    sectionRegistry["B2"].state = freshState(CAR_STOCK_ITEMS);
+    sectionRegistry["B2"].state = loadState("B2") || freshState(CAR_STOCK_ITEMS);
     registerSection("C", "itemsBodyC", "toolsC", RESULT_OPTIONS_DRD);
-    sectionRegistry["C"].state = freshState(PPE_ITEMS);
+    sectionRegistry["C"].state = loadState("C") || freshState(PPE_ITEMS);
     registerSection("D", "itemsBodyD", "toolsD", RESULT_OPTIONS_OV);
-    sectionRegistry["D"].state = freshState(HAND_HYGIENE_ITEMS);
+    sectionRegistry["D"].state = loadState("D") || freshState(HAND_HYGIENE_ITEMS);
     registerSection("E", "itemsBodyE", "toolsE", RESULT_OPTIONS_DRD);
-    sectionRegistry["E"].state = freshState(RESPIRATOR_ITEMS);
+    sectionRegistry["E"].state = loadState("E") || freshState(RESPIRATOR_ITEMS);
   }
 
   // Section A is discipline-specific; cache each discipline's working copy
@@ -142,7 +193,7 @@ function renderAll() {
   registerSection("A", "itemsBodyA", "toolsA", RESULT_OPTIONS_CNMT);
   const cacheKey = `A_${currentDiscipline}`;
   if (!disciplineItemCache[cacheKey]) {
-    disciplineItemCache[cacheKey] = freshState(d.items);
+    disciplineItemCache[cacheKey] = loadState(cacheKey) || freshState(d.items);
   }
   sectionRegistry["A"].state = disciplineItemCache[cacheKey];
 
@@ -535,3 +586,68 @@ async function generatePDF() {
 }
 
 document.getElementById("generateBtn").addEventListener("click", generatePDF);
+
+// ---------- EXPORT CURATED STATE AS NEW data.js ----------
+function jsArrayLiteral(arr, indent) {
+  if (!arr.length) return "[]";
+  return "[\n" + arr.map(t => `${indent}  ${JSON.stringify(t)}`).join(",\n") + `\n${indent}]`;
+}
+
+function buildExportDataJS() {
+  persistSection("A");
+  ["B1", "B2", "C", "D", "E"].forEach(persistSection);
+
+  function itemsFor(disciplineKey) {
+    const cacheKey = `A_${disciplineKey}`;
+    const source = disciplineItemCache[cacheKey] || loadState(cacheKey) || freshState(DISCIPLINES[disciplineKey].items);
+    return source.filter(it => it.include).map(it => it.text);
+  }
+
+  const disciplineBlocks = Object.keys(DISCIPLINES).map(key => {
+    const d = DISCIPLINES[key];
+    const items = itemsFor(key);
+    return `  ${key}: {\n    label: ${JSON.stringify(d.label)},\n    fullName: ${JSON.stringify(d.fullName)},\n    items: ${jsArrayLiteral(items, "    ")}\n  }`;
+  }).join(",\n");
+
+  const sharedArr = (name, prefix) => {
+    const items = getState(prefix).filter(it => it.include).map(it => it.text);
+    return `const ${name} = ${jsArrayLiteral(items, "")};`;
+  };
+
+  return `// Metro Mobile Health Care — Clinical Competency & Onboarding Checklist data
+// Exported from the live tool on ${new Date().toISOString()}
+// Reflects the current curated item lists (removed items excluded, edits applied).
+// Replace data.js in the mmhc-skills repo with this file to make these the
+// permanent defaults for everyone.
+
+const DISCIPLINES = {
+${disciplineBlocks}
+};
+
+${sharedArr("OBSERVATION_ITEMS", "B1")}
+${sharedArr("CAR_STOCK_ITEMS", "B2")}
+${sharedArr("PPE_ITEMS", "C")}
+${sharedArr("HAND_HYGIENE_ITEMS", "D")}
+${sharedArr("RESPIRATOR_ITEMS", "E")}
+
+const RESULT_OPTIONS_CNMT = ["C", "NMT"];
+const RESULT_OPTIONS_MET = ["Met", "Unmet", "N/A"];
+const RESULT_OPTIONS_DRD = ["D", "R/D", "N/A"];
+const RESULT_OPTIONS_OV = ["O", "V", "N/A"];
+`;
+}
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const statusMsg = document.getElementById("statusMsg");
+  const code = buildExportDataJS();
+  const blob = new Blob([code], { type: "text/javascript" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "data.js";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  statusMsg.style.color = "#1f7a4d";
+  statusMsg.textContent = "data.js downloaded — upload it to mmhc-skills (same filename) to make these edits permanent.";
+});
