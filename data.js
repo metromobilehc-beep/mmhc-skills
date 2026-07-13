@@ -1,8 +1,12 @@
-// Metro Mobile Health Care — Clinical Competency & Onboarding Checklist data
-// Exported from the live tool on 2026-07-13T04:46:08.229Z
-// Reflects the current curated item lists (removed items excluded, edits applied).
-// Replace data.js in the mmhc-skills repo with this file to make these the
-// permanent defaults for everyone.
+// Discipline-specific Clinical Competency Review Checklist items
+// (Section A) — a generic, agency-agnostic clinical competency & onboarding
+// checklist covering the standard categories requested across home health
+// referral partners (infection control, PPE, bag/trunk protocol, plan of
+// care documentation, patient teaching, ortho protocols, standardized
+// assessments). Starting content reflects a widely-used industry-standard
+// format (the kind used by Compassus, Ascension at Home, and similar
+// agencies); every item is editable/removable per section in the tool
+// itself, so it can be tailored to whatever a specific agency requests.
 
 const DISCIPLINES = {
   PT: {
@@ -28,8 +32,18 @@ const DISCIPLINES = {
       "Able to effectively teach adult learners",
       "Able to evaluate effectiveness of teaching",
       "Utilizes appropriate teaching material as determined by patient needs",
+      "Understands/implements specific protocols for hip surgeries",
       "Understands/implements specific protocols for knee surgeries",
-      "Utilizes appropriate standardized assessments and interprets results"
+      "Understands/implements specific protocols for shoulder surgeries",
+      "Understands/implements specific protocols for spinal surgeries",
+      "Understands/implements specific protocols for ORIF surgeries",
+      "Understands/implements specific protocols for other surgery (specify): ______________",
+      "Utilizes appropriate standardized assessments and interprets results",
+      "Knowledge of and demonstrates basic techniques of home PT/INR, including verbalization of the purpose of the test, proper specimen collection and preservation",
+      "Properly disposes of lancet in a puncture proof container",
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________"
     ]
   },
   OT: {
@@ -56,8 +70,15 @@ const DISCIPLINES = {
       "Able to effectively teach adult learners",
       "Able to evaluate effectiveness of teaching",
       "Utilizes appropriate teaching material as determined by patient needs",
+      "Understands/implements specific protocols for hip surgeries",
+      "Understands/implements specific protocols for knee surgeries",
+      "Understands/implements specific protocols for shoulder surgeries",
+      "Understands/implements specific protocols for spinal surgeries",
+      "Understands/implements specific protocols for ORIF surgeries",
+      "Understands/implements specific protocols for other surgery (specify): ______________",
       "Utilizes appropriate standardized assessments and interprets results",
-      "Teaches ADLs/IADLs to patient/caregiver"
+      "Teaches ADLs/IADLs to patient/caregiver",
+      "Other: ______________"
     ]
   },
   COTA: {
@@ -82,8 +103,19 @@ const DISCIPLINES = {
       "Able to effectively teach adult learners",
       "Able to evaluate effectiveness of teaching and teach back response",
       "Utilizes appropriate teaching material as determined by patient needs",
+      "Understands/implements specific protocols for hip surgeries",
+      "Understands/implements specific protocols for knee surgeries",
+      "Understands/implements specific protocols for shoulder surgeries",
+      "Understands/implements specific protocols for spinal surgeries",
+      "Understands/implements specific protocols for ORIF surgeries",
+      "Understands/implements specific protocols for other surgery (specify): ______________",
       "Utilizes appropriate standardized assessments and interprets results",
-      "Teaches ADLs/IADLs for patient/caregiver"
+      "Teaches ADLs/IADLs for patient/caregiver",
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________"
     ]
   },
   PTA: {
@@ -108,11 +140,22 @@ const DISCIPLINES = {
       "Able to effectively teach adult learners",
       "Able to evaluate effectiveness of teaching and teach back response",
       "Utilizes appropriate teaching material as determined by patient needs",
-      "Utilizes appropriate standardized assessments and interprets results"
+      "Understands/implements specific protocols for hip surgeries",
+      "Understands/implements specific protocols for knee surgeries",
+      "Understands/implements specific protocols for shoulder surgeries",
+      "Understands/implements specific protocols for spinal surgeries",
+      "Understands/implements specific protocols for ORIF surgeries",
+      "Understands/implements specific protocols for other surgery (specify): ______________",
+      "Utilizes appropriate standardized assessments and interprets results",
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________",
+      "Other: ______________"
     ]
   }
 };
 
+// Shared: Clinical Observation Visit Checklist (Section B) - performance areas
 const OBSERVATION_ITEMS = [
   "Maintains professional appearance/demeanor",
   "Wears name badge at all times",
@@ -120,6 +163,7 @@ const OBSERVATION_ITEMS = [
   "Ethical behavior: Demonstrates understanding of professional boundaries",
   "Clinical Excellence/Safety: Demonstrates knowledge of basic safety precautions for self and for patient",
   "Demonstrates effective infection control techniques",
+  "Is organized and productive",
   "Maintains patient privacy during care delivery",
   "Demonstrates effective teaching/instruction with patient/family",
   "Reviews/follows plan of care in the delivery of services",
@@ -129,23 +173,36 @@ const OBSERVATION_ITEMS = [
   "Exhibits skill proficiency in clinical assessment and clinical process",
   "Exhibits skill proficiency in clinical procedures and can verbalize where to locate procedural support/reference"
 ];
+
+// Shared: Car Inspection / Stock Checklist (Section B, part 2)
 const CAR_STOCK_ITEMS = [
   "Car Clean Area/Car Stock Box - Demonstrates maintenance of clean and organized car area, ensuring all required supplies are available and appropriately stored",
   "Clinician's Bag – placed on leak proof barrier",
   "Face Shield/Goggles/Glasses",
+  "Biohazard Bag",
   "Clinician's Bag - remains stocked with required equipment and supplies; supplies are not expired and follows appropriate infection control procedure",
   "Alcohol Pads",
   "Hand Sanitizer (70%) - Placed in outside pocket",
   "Sani Wipes - OR approved cleaning wipe",
   "Liquid Soap & Paper Towels",
+  "Barriers",
   "Thermometer & covers",
   "BP Cuff",
   "SAT Monitor",
   "Stethoscope",
   "Gown/Mask/Gloves",
+  "Biohazard Bags & Specimen bags",
+  "Trash Bags - Minimum of 4",
+  "Optional - Zip Lock Bags - Gallon size",
   "Expired Supplies",
-  "Car Dirty Area - Maintains a designated dirty area ensuring proper containment, disposal, and compliance with infection control protocols"
+  "Car Dirty Area - Maintains a designated dirty area ensuring proper containment, disposal, and compliance with infection control protocols",
+  "Sharps Container - Do Not exceed 3/4 full",
+  "Insulated Specimen Container w/ Biohazard Labels & Ice Pack (soft container must have hard/leak-proof insert with lid)",
+  "Other: ______________",
+  "Other: ______________"
 ];
+
+// Shared: PPE Competency (Section C)
 const PPE_ITEMS = [
   "Expected Outcomes: Infection prevention practices followed; staff competent with PPE and protocols; staff perform hand hygiene per policy before/after PPE use",
   "Standard, Contact, Droplet, and Airborne Infection Isolation precautions and appropriate PPE selection",
@@ -162,6 +219,8 @@ const PPE_ITEMS = [
   "Wash hands or use alcohol-based hand sanitizer after doffing",
   "Train-the-Trainer Validation (if applicable): Team member approved to validate PPE competency"
 ];
+
+// Shared: Hand Hygiene and Bag Technique (Section D)
 const HAND_HYGIENE_ITEMS = [
   "Hand Hygiene: Apply hand sanitizer at start of visit, place bottle on designated dry barrier",
   "Hand Hygiene: Rub/scrub hands and wrists, between fingers and nails, minimum 20 seconds",
@@ -181,6 +240,8 @@ const HAND_HYGIENE_ITEMS = [
   "Clinical Bag Technique: Do not reach into bag without performing hand hygiene once patient care has started",
   "Clinical Bag Technique: Clean/wipe reusable supplies, air dry, sanitize hands before returning to bag"
 ];
+
+// Shared: Filtering Face Mask / Particulate Respirator (Section E)
 const RESPIRATOR_ITEMS = [
   "Demonstrates competency with donning and doffing disposable particulate respirator (N-95 or equivalent)",
   "Verbalizes description of respirator selection, use, visual inspection, and care",

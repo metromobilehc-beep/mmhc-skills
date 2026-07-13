@@ -83,11 +83,16 @@ document.addEventListener("change", (e) => {
 });
 
 function freshState(items) {
-  return items.map(t => ({ text: t, include: true, selected: "" }));
+  return items.map(t => ({ text: t, include: true, selected: "", selected2: "" }));
 }
 
-function registerSection(prefix, bodyId, toolsId, options, addLabel) {
-  sectionRegistry[prefix] = { bodyId, toolsId, options, addLabel: addLabel || "+ Add item" };
+function registerSection(prefix, bodyId, toolsId, options, addLabel, dual, options2) {
+  sectionRegistry[prefix] = {
+    bodyId, toolsId, options,
+    addLabel: addLabel || "+ Add item",
+    dual: !!dual,
+    options2: options2 || options
+  };
 }
 
 function getState(prefix) {
@@ -98,8 +103,15 @@ function syncStateFromDOM(prefix) {
   const s = sectionRegistry[prefix];
   s.state.forEach((item, idx) => {
     if (!item.include) return;
-    const sel = getRadioValue(`${prefix}_${idx}`);
-    if (sel) item.selected = sel;
+    if (s.dual) {
+      const selfSel = getRadioValue(`${prefix}_self_${idx}`);
+      const peerSel = getRadioValue(`${prefix}_peer_${idx}`);
+      if (selfSel) item.selected = selfSel;
+      if (peerSel) item.selected2 = peerSel;
+    } else {
+      const sel = getRadioValue(`${prefix}_${idx}`);
+      if (sel) item.selected = sel;
+    }
     const inp = document.querySelector(`textarea.item-edit[data-key="${prefix}"][data-idx="${idx}"]`);
     if (inp) item.text = inp.value;
   });
@@ -112,16 +124,26 @@ function renderSection(prefix) {
   s.state.forEach((item, idx) => {
     if (!item.include) return;
     const tr = document.createElement("tr");
-    const name = `${prefix}_${idx}`;
-    tr.innerHTML = `
-      <td class="item-text">
-        <div class="item-row-controls">
-          <textarea class="item-edit" data-key="${prefix}" data-idx="${idx}" rows="1">${escapeHtml(item.text)}</textarea>
-          <button type="button" class="removeBtn" data-key="${prefix}" data-idx="${idx}" title="Not applicable / remove">✕</button>
-        </div>
-      </td>
-      <td><div class="radiogrp">${radioGroupHTML(name, s.options, item.selected)}</div></td>
-    `;
+    const editControls = `
+      <div class="item-row-controls">
+        <textarea class="item-edit" data-key="${prefix}" data-idx="${idx}" rows="1">${escapeHtml(item.text)}</textarea>
+        <button type="button" class="removeBtn" data-key="${prefix}" data-idx="${idx}" title="Not applicable / remove">✕</button>
+      </div>`;
+    if (s.dual) {
+      const selfName = `${prefix}_self_${idx}`;
+      const peerName = `${prefix}_peer_${idx}`;
+      tr.innerHTML = `
+        <td class="item-text">${editControls}</td>
+        <td><div class="radiogrp">${radioGroupHTML(selfName, s.options, item.selected)}</div></td>
+        <td><div class="radiogrp">${radioGroupHTML(peerName, s.options2, item.selected2)}</div></td>
+      `;
+    } else {
+      const name = `${prefix}_${idx}`;
+      tr.innerHTML = `
+        <td class="item-text">${editControls}</td>
+        <td><div class="radiogrp">${radioGroupHTML(name, s.options, item.selected)}</div></td>
+      `;
+    }
     tbody.appendChild(tr);
   });
 
@@ -190,7 +212,7 @@ function renderAll() {
 
   // Section A is discipline-specific; cache each discipline's working copy
   // separately so edits/removals aren't lost when switching tabs.
-  registerSection("A", "itemsBodyA", "toolsA", RESULT_OPTIONS_CNMT);
+  registerSection("A", "itemsBodyA", "toolsA", RESULT_OPTIONS_CNMT, undefined, true, RESULT_OPTIONS_CNMT);
   const cacheKey = `A_${currentDiscipline}`;
   if (!disciplineItemCache[cacheKey]) {
     disciplineItemCache[cacheKey] = loadState(cacheKey) || freshState(d.items);
@@ -439,23 +461,26 @@ async function generatePDF() {
     await embedSignature(canvasId, MARGIN, y, w1, boxH);
     y -= (boxH + 12);
   }
-  function drawItemsTable(prefix, colLabel) {
+  function drawItemsTable(prefix, colLabel, colLabel2) {
     syncStateFromDOM(prefix);
     const s = sectionRegistry[prefix];
-    const options = s.options;
     const activeItems = s.state.filter(it => it.include);
 
     ensureSpace(22);
     page.drawText("Item", { x: MARGIN, y, size: 8.5, font: bold, color: rgb(0.36,0.42,0.49) });
-    page.drawText(colLabel || "Result", { x: MARGIN + CONTENT_W*0.62, y, size: 8.5, font: bold, color: rgb(0.36,0.42,0.49) });
+    if (s.dual) {
+      page.drawText(colLabel || "Self", { x: MARGIN + CONTENT_W*0.56, y, size: 8.5, font: bold, color: rgb(0.36,0.42,0.49) });
+      page.drawText(colLabel2 || "Peer", { x: MARGIN + CONTENT_W*0.79, y, size: 8.5, font: bold, color: rgb(0.36,0.42,0.49) });
+    } else {
+      page.drawText(colLabel || "Result", { x: MARGIN + CONTENT_W*0.62, y, size: 8.5, font: bold, color: rgb(0.36,0.42,0.49) });
+    }
     y -= 6;
     page.drawLine({ start:{x:MARGIN,y}, end:{x:PAGE_W-MARGIN,y}, thickness:0.7, color: rgb(0.86,0.89,0.92) });
     y -= 12;
 
-    const textColW = CONTENT_W * 0.58;
+    const textColW = CONTENT_W * (s.dual ? 0.52 : 0.58);
     activeItems.forEach((item, renderIdx) => {
       const text = item.text;
-      const selected = item.selected;
       const lines = wrapText(text, textColW, font, 9);
       const rowH = Math.max(lines.length * 11, 14) + 8;
       ensureSpace(rowH);
@@ -466,19 +491,27 @@ async function generatePDF() {
         ty -= 11;
       });
 
-      // radio group as PDF form field
-      fieldCounter++;
-      const rgName = `radio_${prefix}_${renderIdx}_${fieldCounter}`;
-      const radioGroup = form.createRadioGroup(rgName);
-      let optX = MARGIN + CONTENT_W * 0.62;
-      options.forEach(opt => {
-        const boxSize = 10;
-        radioGroup.addOptionToPage(opt, page, { x: optX, y: y - 9, width: boxSize, height: boxSize });
-        page.drawText(opt, { x: optX + boxSize + 3, y: y - 8, size: 8.5, font, color: rgb(0.11,0.16,0.22) });
-        optX += boxSize + 6 + font.widthOfTextAtSize(opt, 8.5) + 12;
-      });
-      if (selected) {
-        try { radioGroup.select(selected); } catch(e) {}
+      function drawRadioGroup(options, selectedVal, startX, namePrefix) {
+        fieldCounter++;
+        const rgName = `radio_${namePrefix}_${renderIdx}_${fieldCounter}`;
+        const radioGroup = form.createRadioGroup(rgName);
+        let optX = startX;
+        options.forEach(opt => {
+          const boxSize = 10;
+          radioGroup.addOptionToPage(opt, page, { x: optX, y: y - 9, width: boxSize, height: boxSize });
+          page.drawText(opt, { x: optX + boxSize + 3, y: y - 8, size: 8.5, font, color: rgb(0.11,0.16,0.22) });
+          optX += boxSize + 6 + font.widthOfTextAtSize(opt, 8.5) + 10;
+        });
+        if (selectedVal) {
+          try { radioGroup.select(selectedVal); } catch(e) {}
+        }
+      }
+
+      if (s.dual) {
+        drawRadioGroup(s.options, item.selected, MARGIN + CONTENT_W * 0.56, `${prefix}_self`);
+        drawRadioGroup(s.options2, item.selected2, MARGIN + CONTENT_W * 0.79, `${prefix}_peer`);
+      } else {
+        drawRadioGroup(s.options, item.selected, MARGIN + CONTENT_W * 0.62, prefix);
       }
 
       y -= rowH;
@@ -514,7 +547,7 @@ async function generatePDF() {
   // ---- Section A ----
   drawHeading(`Section A — Clinical Competency Review Checklist (${d.label})`);
   drawSub("C = Competent; NMT = Needs More Training. Self-rating completed prior to observation; peer/leader rating completed during joint visit.");
-  drawItemsTable("A", "Self / Peer Rating");
+  drawItemsTable("A", "Self Rating", "Peer/Leader Rating");
   drawTextFieldRow("Comments", val("commentsA"));
   await drawSigPair("Team Member Signature", "sigA_member", "Date", val("sigA_member_date"));
   await drawSigPair("Trainer/Leader Signature", "sigA_trainer", "Date", val("sigA_trainer_date"));
