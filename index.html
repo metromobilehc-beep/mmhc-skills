@@ -57,6 +57,25 @@
   .sig-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:10px;}
   .disc-name{font-weight:800;color:var(--navy2);}
   .small-muted{font-size:11.5px;color:var(--muted);}
+  .sigpad-wrap{border:1px solid var(--line);border-radius:6px;background:#fff;overflow:hidden;}
+  canvas.sigpad{display:block;width:100%;height:110px;touch-action:none;cursor:crosshair;background:
+    repeating-linear-gradient(transparent, transparent 95%, #eef1f5 95%);}
+  .sigpad-actions{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-top:1px dashed var(--line);background:#fafbfc;}
+  .sigpad-actions button{border:1px solid var(--line);background:#fff;color:var(--navy2);font-size:11.5px;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:600;}
+  .sigpad-actions button:hover{background:#f1f4f8;}
+  .item-row-controls{display:flex;align-items:flex-start;gap:6px;}
+  .item-edit{border:1px solid transparent;background:transparent;padding:4px 6px;font-size:13.5px;font-family:inherit;color:var(--text);border-radius:5px;flex:1;}
+  .item-edit:hover, .item-edit:focus{border-color:var(--line);background:#fff;outline:none;}
+  .removeBtn{border:1px solid var(--line);background:#fff;color:#b3261e;font-size:12px;line-height:1;padding:5px 8px;border-radius:5px;cursor:pointer;flex-shrink:0;}
+  .removeBtn:hover{background:#fdecea;border-color:#f3b9b3;}
+  .section-tools{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:10px 0 4px;}
+  .addItemBtn{border:1.5px dashed var(--navy2);background:#fff;color:var(--navy2);font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer;}
+  .addItemBtn:hover{background:#eef3f9;}
+  .removedWrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .removedLabel{font-size:11.5px;color:var(--muted);margin-right:2px;}
+  .chip{display:flex;align-items:center;gap:6px;background:#f4f0e2;border:1px solid #e7dcb8;color:#6b5a24;font-size:11.5px;padding:4px 8px;border-radius:20px;}
+  .chip button{border:none;background:none;color:#6b5a24;font-weight:800;cursor:pointer;font-size:12px;padding:0;}
+  .chip button:hover{color:#3a2c08;}
 </style>
 </head>
 <body>
@@ -81,7 +100,18 @@
       </div>
       <div class="field">
         <label>Requesting Agency</label>
-        <input type="text" id="agencyName" placeholder="e.g. Compassus">
+        <input type="text" id="agencyName" list="agencyOptions" placeholder="Select or type an agency name">
+        <datalist id="agencyOptions">
+          <option value="Compassus">
+          <option value="Ascension at Home">
+          <option value="BIOS">
+          <option value="Millennium">
+          <option value="Faith">
+          <option value="Rice Home Health">
+          <option value="HelloNote">
+          <option value="Vital Caring">
+          <option value="ViaLife">
+        </datalist>
       </div>
     </div>
     <div class="grid3">
@@ -109,16 +139,17 @@
       </thead>
       <tbody id="itemsBodyA"></tbody>
     </table>
+    <div class="section-tools" id="toolsA"></div>
     <div class="field" style="margin-top:14px;">
       <label>Comments</label>
       <textarea id="commentsA"></textarea>
     </div>
     <div class="sig-row">
-      <div class="field"><label>Team Member Signature (type name)</label><input type="text" id="sigA_member"></div>
+      <div class="field sigpad-slot" data-id="sigA_member" data-label="Team Member Signature"></div>
       <div class="field"><label>Date</label><input type="date" id="sigA_member_date"></div>
     </div>
     <div class="sig-row">
-      <div class="field"><label>Designated Trainer/Leader Signature (type name)</label><input type="text" id="sigA_trainer"></div>
+      <div class="field sigpad-slot" data-id="sigA_trainer" data-label="Designated Trainer/Leader Signature"></div>
       <div class="field"><label>Date</label><input type="date" id="sigA_trainer_date"></div>
     </div>
   </div>
@@ -148,21 +179,23 @@
       <thead><tr><th style="width:55%">Performance Area</th><th style="width:45%">Result</th></tr></thead>
       <tbody id="itemsBodyB1"></tbody>
     </table>
+    <div class="section-tools" id="toolsB1"></div>
     <div class="section-title">Clinical Staff Car Inspection / Stock Checklist</div>
     <table class="items">
       <thead><tr><th style="width:55%">Item</th><th style="width:45%">Result</th></tr></thead>
       <tbody id="itemsBodyB2"></tbody>
     </table>
+    <div class="section-tools" id="toolsB2"></div>
     <div class="field" style="margin-top:10px;">
       <label>Comments</label>
       <textarea id="commentsB"></textarea>
     </div>
     <div class="sig-row">
-      <div class="field"><label>Team Member Signature (type name)</label><input type="text" id="sigB_member"></div>
+      <div class="field sigpad-slot" data-id="sigB_member" data-label="Team Member Signature"></div>
       <div class="field"><label>Date</label><input type="date" id="sigB_member_date"></div>
     </div>
     <div class="sig-row">
-      <div class="field"><label>Designated Trainer/Leader Signature (type name)</label><input type="text" id="sigB_trainer"></div>
+      <div class="field sigpad-slot" data-id="sigB_trainer" data-label="Designated Trainer/Leader Signature"></div>
       <div class="field"><label>Date</label><input type="date" id="sigB_trainer_date"></div>
     </div>
   </div>
@@ -178,15 +211,16 @@
       <thead><tr><th style="width:55%">Competency Area</th><th style="width:45%">Validation</th></tr></thead>
       <tbody id="itemsBodyC"></tbody>
     </table>
+    <div class="section-tools" id="toolsC"></div>
     <div class="attest" style="margin-top:10px;">
       By signing below, the team member attests they participated in an evaluation for the use of PPE and received training on infection control as it relates to communicable diseases, and appropriate PPE selection and use, and agrees to follow standards of practice related to infection control including PPE and hand hygiene.
     </div>
     <div class="sig-row">
-      <div class="field"><label>Team Member Signature (type name)</label><input type="text" id="sigC_member"></div>
+      <div class="field sigpad-slot" data-id="sigC_member" data-label="Team Member Signature"></div>
       <div class="field"><label>Date</label><input type="date" id="sigC_member_date"></div>
     </div>
     <div class="sig-row">
-      <div class="field"><label>Director of Clinical Services / Designee Signature (type name)</label><input type="text" id="sigC_trainer"></div>
+      <div class="field sigpad-slot" data-id="sigC_trainer" data-label="Director of Clinical Services / Designee Signature"></div>
       <div class="field"><label>Date</label><input type="date" id="sigC_trainer_date"></div>
     </div>
   </div>
@@ -198,12 +232,13 @@
       <thead><tr><th style="width:60%">Element</th><th style="width:40%">Method of Evaluation</th></tr></thead>
       <tbody id="itemsBodyD"></tbody>
     </table>
+    <div class="section-tools" id="toolsD"></div>
     <div class="sig-row">
-      <div class="field"><label>Team Member Name / Signature (type name)</label><input type="text" id="sigD_member"></div>
+      <div class="field sigpad-slot" data-id="sigD_member" data-label="Team Member Signature"></div>
       <div class="field"><label>Date</label><input type="date" id="sigD_member_date"></div>
     </div>
     <div class="sig-row">
-      <div class="field"><label>Designated Trainer/Leader Signature (type name)</label><input type="text" id="sigD_trainer"></div>
+      <div class="field sigpad-slot" data-id="sigD_trainer" data-label="Designated Trainer/Leader Signature"></div>
       <div class="field"><label>Date</label><input type="date" id="sigD_trainer_date"></div>
     </div>
   </div>
@@ -219,15 +254,16 @@
       <thead><tr><th style="width:55%">Competency Area</th><th style="width:45%">Validation</th></tr></thead>
       <tbody id="itemsBodyE"></tbody>
     </table>
+    <div class="section-tools" id="toolsE"></div>
     <div class="attest" style="margin-top:10px;">
       By signing below, the trainer/leader certifies training was provided on the above items and the team member is prepared to perform these procedures independently and will comply with clinical protocol and safety requirements.
     </div>
     <div class="sig-row">
-      <div class="field"><label>Team Member Signature (type name)</label><input type="text" id="sigE_member"></div>
+      <div class="field sigpad-slot" data-id="sigE_member" data-label="Team Member Signature"></div>
       <div class="field"><label>Date</label><input type="date" id="sigE_member_date"></div>
     </div>
     <div class="sig-row">
-      <div class="field"><label>Designated Trainer/Leader Signature (type name)</label><input type="text" id="sigE_trainer"></div>
+      <div class="field sigpad-slot" data-id="sigE_trainer" data-label="Designated Trainer/Leader Signature"></div>
       <div class="field"><label>Date</label><input type="date" id="sigE_trainer_date"></div>
     </div>
   </div>
@@ -241,7 +277,7 @@
       <div class="field"><label>Team Member Printed Name</label><input type="text" id="sigF_member_print"></div>
       <div class="field"><label>Signature Date</label><input type="date" id="sigF_member_date"></div>
     </div>
-    <div class="field"><label>Team Member Signature (type name)</label><input type="text" id="sigF_member_sig"></div>
+    <div class="field sigpad-slot" data-id="sigF_member_sig" data-label="Team Member Signature"></div>
 
     <div class="attest" style="margin-top:14px;">
       <strong>Attestation for New Team Member's Direct Leader:</strong> By my signature, I attest the above-named team member has completed all required training and learning experiences as outlined in the Home Health <span class="disc-name" id="discNameF2"></span> Onboarding Guide, had the opportunity to ask questions and work with peers/leaders and patients under direct supervision, and is prepared and ready to practice independently with appropriate indirect supervision.
@@ -250,7 +286,7 @@
       <div class="field"><label>Leader's Printed Name</label><input type="text" id="sigF_leader_print"></div>
       <div class="field"><label>Signature Date</label><input type="date" id="sigF_leader_date"></div>
     </div>
-    <div class="field"><label>Leader Signature (type name)</label><input type="text" id="sigF_leader_sig"></div>
+    <div class="field sigpad-slot" data-id="sigF_leader_sig" data-label="Leader Signature"></div>
     <div class="note">Attestation must be uploaded to Cred Track along with the completed competency forms and onboarding checklist.</div>
   </div>
 

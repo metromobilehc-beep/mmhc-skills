@@ -1,5 +1,12 @@
 // Discipline-specific Clinical Competency Review Checklist items
-// (Section A) — transcribed from Compassus Home Health Clinical Onboarding Guides
+// (Section A) — a generic, agency-agnostic clinical competency & onboarding
+// checklist covering the standard categories requested across home health
+// referral partners (infection control, PPE, bag/trunk protocol, plan of
+// care documentation, patient teaching, ortho protocols, standardized
+// assessments). Starting content reflects a widely-used industry-standard
+// format (the kind used by Compassus, Ascension at Home, and similar
+// agencies); every item is editable/removable per section in the tool
+// itself, so it can be tailored to whatever a specific agency requests.
 
 const DISCIPLINES = {
   PT: {

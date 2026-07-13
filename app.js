@@ -8,7 +8,11 @@ function renderDisciplineTabs() {
     const btn = document.createElement("button");
     btn.textContent = key;
     btn.className = key === currentDiscipline ? "active" : "";
-    btn.onclick = () => { currentDiscipline = key; renderAll(); };
+    btn.onclick = () => {
+      if (sectionRegistry["A"]) syncStateFromDOM("A");
+      currentDiscipline = key;
+      renderAll();
+    };
     wrap.appendChild(btn);
   });
 }
@@ -21,19 +25,96 @@ function radioGroupHTML(name, options, defaultVal) {
   }).join("");
 }
 
-function buildItemRows(bodyId, items, options, prefix) {
-  const tbody = document.getElementById(bodyId);
+// ---------- EDITABLE ITEM STATE ----------
+// Each section keeps a mutable working list of {text, include, selected}
+// so items can be reworded, marked not-applicable, removed, or added to
+// without touching the original industry-standard defaults in data.js.
+const sectionRegistry = {};       // prefix -> { bodyId, toolsId, options, addLabel }
+const disciplineItemCache = {};   // "A_PT" etc -> state array (so edits survive tab switching)
+
+function escapeHtml(s) {
+  return (s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function freshState(items) {
+  return items.map(t => ({ text: t, include: true, selected: "" }));
+}
+
+function registerSection(prefix, bodyId, toolsId, options, addLabel) {
+  sectionRegistry[prefix] = { bodyId, toolsId, options, addLabel: addLabel || "+ Add item" };
+}
+
+function getState(prefix) {
+  return sectionRegistry[prefix].state;
+}
+
+function syncStateFromDOM(prefix) {
+  const s = sectionRegistry[prefix];
+  s.state.forEach((item, idx) => {
+    if (!item.include) return;
+    const sel = getRadioValue(`${prefix}_${idx}`);
+    if (sel) item.selected = sel;
+    const inp = document.querySelector(`input.item-edit[data-key="${prefix}"][data-idx="${idx}"]`);
+    if (inp) item.text = inp.value;
+  });
+}
+
+function renderSection(prefix) {
+  const s = sectionRegistry[prefix];
+  const tbody = document.getElementById(s.bodyId);
   tbody.innerHTML = "";
-  items.forEach((text, idx) => {
+  s.state.forEach((item, idx) => {
+    if (!item.include) return;
     const tr = document.createElement("tr");
     const name = `${prefix}_${idx}`;
     tr.innerHTML = `
-      <td class="item-text">${text}</td>
-      <td><div class="radiogrp">${radioGroupHTML(name, options)}</div></td>
+      <td class="item-text">
+        <div class="item-row-controls">
+          <input type="text" class="item-edit" data-key="${prefix}" data-idx="${idx}" value="${escapeHtml(item.text)}">
+          <button type="button" class="removeBtn" data-key="${prefix}" data-idx="${idx}" title="Not applicable / remove">✕</button>
+        </div>
+      </td>
+      <td><div class="radiogrp">${radioGroupHTML(name, s.options, item.selected)}</div></td>
     `;
     tbody.appendChild(tr);
   });
+
+  const toolsEl = document.getElementById(s.toolsId);
+  const removedItems = s.state.map((item, idx) => ({ item, idx })).filter(x => !x.item.include);
+  let chipsHtml = "";
+  if (removedItems.length) {
+    chipsHtml = `<div class="removedWrap"><span class="removedLabel">Not applicable (${removedItems.length}):</span>` +
+      removedItems.map(({item, idx}) => `
+        <span class="chip">${escapeHtml(item.text.slice(0,40))}${item.text.length>40?"…":""}
+          <button type="button" class="restoreBtn" data-key="${prefix}" data-idx="${idx}" title="Restore item">↺</button>
+        </span>`).join("") +
+      `</div>`;
+  }
+  toolsEl.innerHTML = `<button type="button" class="addItemBtn" data-key="${prefix}">${s.addLabel}</button>${chipsHtml}`;
 }
+
+document.addEventListener("click", (e) => {
+  const removeBtn = e.target.closest(".removeBtn");
+  const restoreBtn = e.target.closest(".restoreBtn");
+  const addBtn = e.target.closest(".addItemBtn");
+  if (removeBtn) {
+    const { key, idx } = removeBtn.dataset;
+    syncStateFromDOM(key);
+    getState(key)[+idx].include = false;
+    renderSection(key);
+  } else if (restoreBtn) {
+    const { key, idx } = restoreBtn.dataset;
+    syncStateFromDOM(key);
+    getState(key)[+idx].include = true;
+    renderSection(key);
+  } else if (addBtn) {
+    const key = addBtn.dataset.key;
+    syncStateFromDOM(key);
+    getState(key).push({ text: "", include: true, selected: "" });
+    renderSection(key);
+  }
+});
+
 
 function renderAll() {
   renderDisciplineTabs();
@@ -42,15 +123,115 @@ function renderAll() {
   document.getElementById("discNameF").textContent = `${d.label} (${d.fullName})`;
   document.getElementById("discNameF2").textContent = `${d.label} (${d.fullName})`;
 
-  buildItemRows("itemsBodyA", d.items, RESULT_OPTIONS_CNMT, "A");
-  buildItemRows("itemsBodyB1", OBSERVATION_ITEMS, RESULT_OPTIONS_MET, "B1");
-  buildItemRows("itemsBodyB2", CAR_STOCK_ITEMS, RESULT_OPTIONS_MET, "B2");
-  buildItemRows("itemsBodyC", PPE_ITEMS, RESULT_OPTIONS_DRD, "C");
-  buildItemRows("itemsBodyD", HAND_HYGIENE_ITEMS, RESULT_OPTIONS_OV, "D");
-  buildItemRows("itemsBodyE", RESPIRATOR_ITEMS, RESULT_OPTIONS_DRD, "E");
+  // Register (once) all non-discipline-specific sections
+  if (!sectionRegistry["B1"]) {
+    registerSection("B1", "itemsBodyB1", "toolsB1", RESULT_OPTIONS_MET);
+    sectionRegistry["B1"].state = freshState(OBSERVATION_ITEMS);
+    registerSection("B2", "itemsBodyB2", "toolsB2", RESULT_OPTIONS_MET);
+    sectionRegistry["B2"].state = freshState(CAR_STOCK_ITEMS);
+    registerSection("C", "itemsBodyC", "toolsC", RESULT_OPTIONS_DRD);
+    sectionRegistry["C"].state = freshState(PPE_ITEMS);
+    registerSection("D", "itemsBodyD", "toolsD", RESULT_OPTIONS_OV);
+    sectionRegistry["D"].state = freshState(HAND_HYGIENE_ITEMS);
+    registerSection("E", "itemsBodyE", "toolsE", RESULT_OPTIONS_DRD);
+    sectionRegistry["E"].state = freshState(RESPIRATOR_ITEMS);
+  }
+
+  // Section A is discipline-specific; cache each discipline's working copy
+  // separately so edits/removals aren't lost when switching tabs.
+  registerSection("A", "itemsBodyA", "toolsA", RESULT_OPTIONS_CNMT);
+  const cacheKey = `A_${currentDiscipline}`;
+  if (!disciplineItemCache[cacheKey]) {
+    disciplineItemCache[cacheKey] = freshState(d.items);
+  }
+  sectionRegistry["A"].state = disciplineItemCache[cacheKey];
+
+  renderSection("A");
+  renderSection("B1");
+  renderSection("B2");
+  renderSection("C");
+  renderSection("D");
+  renderSection("E");
 }
 
-document.addEventListener("DOMContentLoaded", renderAll);
+document.addEventListener("DOMContentLoaded", () => {
+  renderAll();
+  renderSignaturePads();
+});
+
+// ---------- SIGNATURE PADS ----------
+function renderSignaturePads() {
+  document.querySelectorAll(".sigpad-slot").forEach(slot => {
+    const id = slot.dataset.id;
+    const label = slot.dataset.label || "Signature";
+    slot.innerHTML = `
+      <label>${label}</label>
+      <div class="sigpad-wrap">
+        <canvas id="${id}" class="sigpad" width="480" height="110"></canvas>
+        <div class="sigpad-actions">
+          <span class="small-muted">Sign with mouse, finger, or stylus</span>
+          <button type="button" data-clear="${id}">Clear</button>
+        </div>
+      </div>
+    `;
+    const canvas = document.getElementById(id);
+    setupSignaturePad(canvas);
+  });
+  document.querySelectorAll("[data-clear]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const canvas = document.getElementById(btn.dataset.clear);
+      if (canvas && canvas._clearSig) canvas._clearSig();
+    });
+  });
+}
+
+function setupSignaturePad(canvas) {
+  const ctx = canvas.getContext("2d");
+  ctx.strokeStyle = "#0b2340";
+  ctx.lineWidth = 2.2;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  let drawing = false;
+  let hasInk = false;
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  }
+  function start(e) {
+    drawing = true;
+    hasInk = true;
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    e.preventDefault();
+  }
+  function move(e) {
+    if (!drawing) return;
+    const p = getPos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    e.preventDefault();
+  }
+  function end() { drawing = false; }
+
+  canvas.addEventListener("mousedown", start);
+  canvas.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", end);
+  canvas.addEventListener("touchstart", start, { passive: false });
+  canvas.addEventListener("touchmove", move, { passive: false });
+  canvas.addEventListener("touchend", end);
+
+  canvas._hasInk = () => hasInk;
+  canvas._clearSig = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    hasInk = false;
+  };
+}
 
 // ---------- helpers to read selected radio values ----------
 function getRadioValue(name) {
@@ -149,23 +330,70 @@ async function generatePDF() {
     tf.addToPage(page, { x: MARGIN, y: y - 14, width: w, height: 16, borderWidth: 0.7 });
     y -= 26;
   }
-  function drawSigPair(labelSig, valueSig, labelDate, valueDate) {
-    ensureSpace(30);
+  async function embedSignature(canvasId, x, yTop, w, h) {
+    page.drawRectangle({ x, y: yTop - h, width: w, height: h, borderColor: rgb(0.75,0.79,0.83), borderWidth: 0.7 });
+    const canvas = document.getElementById(canvasId);
+    if (canvas && canvas._hasInk && canvas._hasInk()) {
+      const dataUrl = canvas.toDataURL("image/png");
+      const pngBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
+      const png = await pdfDoc.embedPng(pngBytes);
+      const dims = png.scaleToFit(w - 10, h - 10);
+      page.drawImage(png, {
+        x: x + (w - dims.width) / 2,
+        y: yTop - h + (h - dims.height) / 2,
+        width: dims.width,
+        height: dims.height
+      });
+    }
+  }
+
+  async function drawSigPair(labelSig, canvasId, labelDate, valueDate) {
+    const boxH = 42;
+    ensureSpace(boxH + 20);
     const w1 = CONTENT_W * 0.65, w2 = CONTENT_W * 0.30;
     page.drawText(labelSig, { x: MARGIN, y, size: 9, font: bold, color: rgb(0.07,0.16,0.29) });
     page.drawText(labelDate, { x: MARGIN + w1 + 10, y, size: 9, font: bold, color: rgb(0.07,0.16,0.29) });
     y -= 12;
-    fieldCounter++;
-    const tf1 = form.createTextField(`sig_${fieldCounter}`);
-    tf1.setText(valueSig || "");
-    tf1.addToPage(page, { x: MARGIN, y: y - 14, width: w1, height: 16, borderWidth: 0.7 });
+    await embedSignature(canvasId, MARGIN, y, w1, boxH);
     fieldCounter++;
     const tf2 = form.createTextField(`sigdate_${fieldCounter}`);
+    tf2.setText(valueDate || "");
+    tf2.addToPage(page, { x: MARGIN + w1 + 10, y: y - 16, width: w2, height: 16, borderWidth: 0.7 });
+    y -= (boxH + 12);
+  }
+
+  function drawNameDatePair(labelName, valueName, labelDate, valueDate) {
+    ensureSpace(30);
+    const w1 = CONTENT_W * 0.65, w2 = CONTENT_W * 0.30;
+    page.drawText(labelName, { x: MARGIN, y, size: 9, font: bold, color: rgb(0.07,0.16,0.29) });
+    page.drawText(labelDate, { x: MARGIN + w1 + 10, y, size: 9, font: bold, color: rgb(0.07,0.16,0.29) });
+    y -= 12;
+    fieldCounter++;
+    const tf1 = form.createTextField(`name_${fieldCounter}`);
+    tf1.setText(valueName || "");
+    tf1.addToPage(page, { x: MARGIN, y: y - 14, width: w1, height: 16, borderWidth: 0.7 });
+    fieldCounter++;
+    const tf2 = form.createTextField(`namedate_${fieldCounter}`);
     tf2.setText(valueDate || "");
     tf2.addToPage(page, { x: MARGIN + w1 + 10, y: y - 14, width: w2, height: 16, borderWidth: 0.7 });
     y -= 26;
   }
-  function drawItemsTable(items, options, prefix, colLabel) {
+
+  async function drawSignatureOnly(labelSig, canvasId) {
+    const boxH = 42;
+    ensureSpace(boxH + 16);
+    const w1 = CONTENT_W * 0.65;
+    page.drawText(labelSig, { x: MARGIN, y, size: 9, font: bold, color: rgb(0.07,0.16,0.29) });
+    y -= 12;
+    await embedSignature(canvasId, MARGIN, y, w1, boxH);
+    y -= (boxH + 12);
+  }
+  function drawItemsTable(prefix, colLabel) {
+    syncStateFromDOM(prefix);
+    const s = sectionRegistry[prefix];
+    const options = s.options;
+    const activeItems = s.state.filter(it => it.include);
+
     ensureSpace(22);
     page.drawText("Item", { x: MARGIN, y, size: 8.5, font: bold, color: rgb(0.36,0.42,0.49) });
     page.drawText(colLabel || "Result", { x: MARGIN + CONTENT_W*0.62, y, size: 8.5, font: bold, color: rgb(0.36,0.42,0.49) });
@@ -174,9 +402,9 @@ async function generatePDF() {
     y -= 12;
 
     const textColW = CONTENT_W * 0.58;
-    items.forEach((text, idx) => {
-      const name = `${prefix}_${idx}`;
-      const selected = getRadioValue(name);
+    activeItems.forEach((item, renderIdx) => {
+      const text = item.text;
+      const selected = item.selected;
       const lines = wrapText(text, textColW, font, 9);
       const rowH = Math.max(lines.length * 11, 14) + 8;
       ensureSpace(rowH);
@@ -189,7 +417,7 @@ async function generatePDF() {
 
       // radio group as PDF form field
       fieldCounter++;
-      const rgName = `radio_${prefix}_${idx}_${fieldCounter}`;
+      const rgName = `radio_${prefix}_${renderIdx}_${fieldCounter}`;
       const radioGroup = form.createRadioGroup(rgName);
       let optX = MARGIN + CONTENT_W * 0.62;
       options.forEach(opt => {
@@ -235,10 +463,10 @@ async function generatePDF() {
   // ---- Section A ----
   drawHeading(`Section A — Clinical Competency Review Checklist (${d.label})`);
   drawSub("C = Competent; NMT = Needs More Training. Self-rating completed prior to observation; peer/leader rating completed during joint visit.");
-  drawItemsTable(d.items, RESULT_OPTIONS_CNMT, "A", "Self / Peer Rating");
+  drawItemsTable("A", "Self / Peer Rating");
   drawTextFieldRow("Comments", val("commentsA"));
-  drawSigPair("Team Member Signature", val("sigA_member"), "Date", val("sigA_member_date"));
-  drawSigPair("Trainer/Leader Signature", val("sigA_trainer"), "Date", val("sigA_trainer_date"));
+  await drawSigPair("Team Member Signature", "sigA_member", "Date", val("sigA_member_date"));
+  await drawSigPair("Trainer/Leader Signature", "sigA_trainer", "Date", val("sigA_trainer_date"));
 
   // ---- Section B ----
   newPage();
@@ -247,48 +475,48 @@ async function generatePDF() {
     ["Reason for Visit", val("obsReason")],
     ["Setting", val("obsSetting")]
   ]);
-  drawItemsTable(OBSERVATION_ITEMS, RESULT_OPTIONS_MET, "B1", "Result");
+  drawItemsTable("B1", "Result");
   drawSub("Clinical Staff Car Inspection / Stock Checklist");
-  drawItemsTable(CAR_STOCK_ITEMS, RESULT_OPTIONS_MET, "B2", "Result");
+  drawItemsTable("B2", "Result");
   drawTextFieldRow("Comments", val("commentsB"));
-  drawSigPair("Team Member Signature", val("sigB_member"), "Date", val("sigB_member_date"));
-  drawSigPair("Trainer/Leader Signature", val("sigB_trainer"), "Date", val("sigB_trainer_date"));
+  await drawSigPair("Team Member Signature", "sigB_member", "Date", val("sigB_member_date"));
+  await drawSigPair("Trainer/Leader Signature", "sigB_trainer", "Date", val("sigB_trainer_date"));
 
   // ---- Section C ----
   newPage();
   drawHeading("Section C — Personal Protective Equipment (PPE) Competency");
   drawKeyValueLine([["Review Type", val("ppeType")]]);
-  drawItemsTable(PPE_ITEMS, RESULT_OPTIONS_DRD, "C", "D / R-D / N-A");
+  drawItemsTable("C", "D / R-D / N-A");
   drawSub("Attestation: Team member participated in an evaluation for the use of PPE and received training on infection control, and agrees to follow standards of practice related to infection control including PPE and hand hygiene.");
-  drawSigPair("Team Member Signature", val("sigC_member"), "Date", val("sigC_member_date"));
-  drawSigPair("Director of Clinical Services", val("sigC_trainer"), "Date", val("sigC_trainer_date"));
+  await drawSigPair("Team Member Signature", "sigC_member", "Date", val("sigC_member_date"));
+  await drawSigPair("Director of Clinical Services", "sigC_trainer", "Date", val("sigC_trainer_date"));
 
   // ---- Section D ----
   newPage();
   drawHeading("Section D — Hand Hygiene & Clinical Bag Technique Competency");
-  drawItemsTable(HAND_HYGIENE_ITEMS, RESULT_OPTIONS_OV, "D", "O / V / N-A");
-  drawSigPair("Team Member Signature", val("sigD_member"), "Date", val("sigD_member_date"));
-  drawSigPair("Trainer/Leader Signature", val("sigD_trainer"), "Date", val("sigD_trainer_date"));
+  drawItemsTable("D", "O / V / N-A");
+  await drawSigPair("Team Member Signature", "sigD_member", "Date", val("sigD_member_date"));
+  await drawSigPair("Trainer/Leader Signature", "sigD_trainer", "Date", val("sigD_trainer_date"));
 
   // ---- Section E ----
   newPage();
   drawHeading("Section E — Filtering Face Mask / Particulate Respirator Training & Competency");
   drawKeyValueLine([["Type of Review", val("respType")]]);
-  drawItemsTable(RESPIRATOR_ITEMS, RESULT_OPTIONS_DRD, "E", "D / R-D / N-A");
+  drawItemsTable("E", "D / R-D / N-A");
   drawSub("Attestation: Trainer/leader certifies training was provided on the above items and the team member is prepared to perform these procedures independently.");
-  drawSigPair("Team Member Signature", val("sigE_member"), "Date", val("sigE_member_date"));
-  drawSigPair("Trainer/Leader Signature", val("sigE_trainer"), "Date", val("sigE_trainer_date"));
+  await drawSigPair("Team Member Signature", "sigE_member", "Date", val("sigE_member_date"));
+  await drawSigPair("Trainer/Leader Signature", "sigE_trainer", "Date", val("sigE_trainer_date"));
 
   // ---- Section F ----
   newPage();
   drawHeading("Section F — Conclusion of Orientation & Onboarding");
   drawSub(`Attestation for New Team Member: I attest I have completed all required training and learning experiences as outlined in the Home Health ${d.label} (${d.fullName}) Onboarding Guide, had the opportunity to ask questions and work with peers/leaders and patients under direct supervision, and feel prepared and ready to practice independently with appropriate indirect supervision.`);
-  drawSigPair("Team Member Printed Name", val("sigF_member_print"), "Date", val("sigF_member_date"));
-  drawTextFieldRow("Team Member Signature", val("sigF_member_sig"));
+  drawNameDatePair("Team Member Printed Name", val("sigF_member_print"), "Date", val("sigF_member_date"));
+  await drawSignatureOnly("Team Member Signature", "sigF_member_sig");
   y -= 6;
   drawSub(`Attestation for Direct Leader: I attest the above-named team member has completed all required training and learning experiences as outlined in the Home Health ${d.label} (${d.fullName}) Onboarding Guide and is prepared and ready to practice independently with appropriate indirect supervision.`);
-  drawSigPair("Leader's Printed Name", val("sigF_leader_print"), "Date", val("sigF_leader_date"));
-  drawTextFieldRow("Leader Signature", val("sigF_leader_sig"));
+  drawNameDatePair("Leader's Printed Name", val("sigF_leader_print"), "Date", val("sigF_leader_date"));
+  await drawSignatureOnly("Leader Signature", "sigF_leader_sig");
   drawSub("This attestation must be uploaded to Cred Track along with the completed competency forms and onboarding checklist.");
 
   const pdfBytes = await pdfDoc.save();
