@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metro Mobile Health Care — Clinical Competency & Onboarding Checklist</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+  :root{
+    --navy:#0b2340; --navy2:#123a63; --gold:#c9a34e; --bg:#f4f6f9; --card:#ffffff;
+    --line:#dbe2ea; --text:#1c2b3a; --muted:#5b6b7c; --good:#1f7a4d; --warn:#b3541e;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:0;}
+  header{background:var(--navy);color:#fff;padding:20px 24px;}
+  header h1{margin:0;font-size:20px;font-weight:700;}
+  header p{margin:4px 0 0;font-size:13px;color:#c7d3e0;}
+  .wrap{max-width:960px;margin:0 auto;padding:20px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(20,30,50,.04);}
+  .card h2{font-size:16px;margin:0 0 4px;color:var(--navy2);border-bottom:2px solid var(--gold);padding-bottom:8px;}
+  .card .sub{font-size:12.5px;color:var(--muted);margin-bottom:14px;}
+  label{font-size:13px;font-weight:600;color:var(--navy2);display:block;margin-bottom:4px;}
+  input[type=text], input[type=date], select, textarea{
+    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px;background:#fff;color:var(--text);
+  }
+  textarea{min-height:60px;resize:vertical;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  .field{margin-bottom:12px;}
+  table.items{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.items th{text-align:left;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:2px solid var(--line);}
+  table.items td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.items tr:last-child td{border-bottom:none;}
+  .item-text{padding-right:10px;}
+  .radiogrp{display:flex;gap:10px;white-space:nowrap;}
+  .radiogrp label{display:flex;align-items:center;gap:4px;font-weight:500;font-size:12.5px;color:var(--text);margin:0;}
+  .radiogrp input{margin:0;}
+  .discipline-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .discipline-tabs button{
+    padding:10px 18px;border-radius:8px;border:2px solid var(--navy2);background:#fff;color:var(--navy2);font-weight:700;cursor:pointer;font-size:14px;
+  }
+  .discipline-tabs button.active{background:var(--navy2);color:#fff;}
+  .note{font-size:12px;color:var(--muted);margin-top:6px;}
+  .checkline{display:flex;align-items:center;gap:6px;font-size:13.5px;margin:4px 0;}
+  .checkline input{margin:0;}
+  .barecheck-row{display:flex;flex-wrap:wrap;gap:16px;margin:8px 0 4px;}
+  .section-title{font-weight:700;font-size:13.5px;color:var(--navy2);margin:14px 0 6px;}
+  .action-bar{position:sticky;bottom:0;background:linear-gradient(180deg,rgba(244,246,249,0) ,var(--bg) 30%);padding:16px 0 6px;text-align:center;}
+  button.primary{
+    background:var(--gold);color:#3a2c08;border:none;padding:14px 28px;font-size:15px;font-weight:700;border-radius:8px;cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+  }
+  button.primary:hover{filter:brightness(0.95);}
+  .status{font-size:13px;margin-top:10px;color:var(--muted);text-align:center;}
+  .req{color:#b3261e;}
+  .attest{font-size:13px;line-height:1.5;background:#f8f6ee;border:1px solid #e7dcb8;padding:12px 14px;border-radius:8px;}
+  .sig-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:10px;}
+  .disc-name{font-weight:800;color:var(--navy2);}
+  .small-muted{font-size:11.5px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Metro Mobile Health Care — Clinical Competency &amp; Onboarding Checklist</h1>
+  <p>Fill out once per clinician per agency requirement. Generates a completed, fillable PDF for upload to Cred Track.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <div class="discipline-tabs" id="disciplineTabs"></div>
+    <div class="grid3" style="margin-top:14px;">
+      <div class="field">
+        <label>Team Member Name <span class="req">*</span></label>
+        <input type="text" id="clinicianName" placeholder="First Last, credentials">
+      </div>
+      <div class="field">
+        <label>Clinical Role / Title</label>
+        <input type="text" id="clinicalRole" placeholder="e.g. Home Health Physical Therapist">
+      </div>
+      <div class="field">
+        <label>Requesting Agency</label>
+        <input type="text" id="agencyName" placeholder="e.g. Compassus">
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="field">
+        <label>Date of Review</label>
+        <input type="date" id="reviewDate">
+      </div>
+      <div class="field">
+        <label>Designated Trainer / Leader Name</label>
+        <input type="text" id="trainerName">
+      </div>
+      <div class="field">
+        <label>Trainer Title</label>
+        <input type="text" id="trainerTitle">
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="sectionA">
+    <h2>Section A — Home Health <span class="disc-name" id="discNameA"></span> Clinical Competency Review Checklist</h2>
+    <div class="sub">Team member completes self-rating prior to the observation visit. Trainer/leader completes peer observation rating during the joint visit. C = Competent; NMT = Needs More Training. If a team member needs more training, the leader must provide and document the training within 30 days.</div>
+    <table class="items">
+      <thead>
+        <tr><th style="width:34%">Knowledge / Skill / Task</th><th style="width:33%">Team Member Self-Rating</th><th style="width:33%">Peer / Leader Observation</th></tr>
+      </thead>
+      <tbody id="itemsBodyA"></tbody>
+    </table>
+    <div class="field" style="margin-top:14px;">
+      <label>Comments</label>
+      <textarea id="commentsA"></textarea>
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Team Member Signature (type name)</label><input type="text" id="sigA_member"></div>
+      <div class="field"><label>Date</label><input type="date" id="sigA_member_date"></div>
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Designated Trainer/Leader Signature (type name)</label><input type="text" id="sigA_trainer"></div>
+      <div class="field"><label>Date</label><input type="date" id="sigA_trainer_date"></div>
+    </div>
+  </div>
+
+  <div class="card" id="sectionB">
+    <h2>Section B — Clinical Observation Visit Checklist</h2>
+    <div class="sub">Home Health / Hospice observation of performance and vehicle stock.</div>
+    <div class="grid2">
+      <div class="field">
+        <label>Reason for Observation Visit</label>
+        <select id="obsReason">
+          <option>Initial/Orientation</option>
+          <option>Annual</option>
+          <option>Requested by team member</option>
+          <option>Training/Teaching/Follow Up</option>
+          <option>Performance Management</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Setting</label>
+        <select id="obsSetting"><option>Home Health</option><option>Hospice</option></select>
+      </div>
+    </div>
+    <div class="section-title">Performance Areas Observed</div>
+    <table class="items">
+      <thead><tr><th style="width:55%">Performance Area</th><th style="width:45%">Result</th></tr></thead>
+      <tbody id="itemsBodyB1"></tbody>
+    </table>
+    <div class="section-title">Clinical Staff Car Inspection / Stock Checklist</div>
+    <table class="items">
+      <thead><tr><th style="width:55%">Item</th><th style="width:45%">Result</th></tr></thead>
+      <tbody id="itemsBodyB2"></tbody>
+    </table>
+    <div class="field" style="margin-top:10px;">
+      <label>Comments</label>
+      <textarea id="commentsB"></textarea>
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Team Member Signature (type name)</label><input type="text" id="sigB_member"></div>
+      <div class="field"><label>Date</label><input type="date" id="sigB_member_date"></div>
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Designated Trainer/Leader Signature (type name)</label><input type="text" id="sigB_trainer"></div>
+      <div class="field"><label>Date</label><input type="date" id="sigB_trainer_date"></div>
+    </div>
+  </div>
+
+  <div class="card" id="sectionC">
+    <h2>Section C — Personal Protective Equipment (PPE) Competency</h2>
+    <div class="sub">D = Didactic (verbal instruction with verbal repeat). R/D = Return Demonstration (observed performance). Return demonstration is required for all team members providing direct patient care.</div>
+    <div class="field">
+      <label>Review Type</label>
+      <select id="ppeType"><option>Initial</option><option>Remedial</option></select>
+    </div>
+    <table class="items">
+      <thead><tr><th style="width:55%">Competency Area</th><th style="width:45%">Validation</th></tr></thead>
+      <tbody id="itemsBodyC"></tbody>
+    </table>
+    <div class="attest" style="margin-top:10px;">
+      By signing below, the team member attests they participated in an evaluation for the use of PPE and received training on infection control as it relates to communicable diseases, and appropriate PPE selection and use, and agrees to follow standards of practice related to infection control including PPE and hand hygiene.
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Team Member Signature (type name)</label><input type="text" id="sigC_member"></div>
+      <div class="field"><label>Date</label><input type="date" id="sigC_member_date"></div>
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Director of Clinical Services / Designee Signature (type name)</label><input type="text" id="sigC_trainer"></div>
+      <div class="field"><label>Date</label><input type="date" id="sigC_trainer_date"></div>
+    </div>
+  </div>
+
+  <div class="card" id="sectionD">
+    <h2>Section D — Hand Hygiene &amp; Clinical Bag Technique Competency</h2>
+    <div class="sub">Lippincott Hand Hygiene, Home Care. O = Observation, V = Verbal.</div>
+    <table class="items">
+      <thead><tr><th style="width:60%">Element</th><th style="width:40%">Method of Evaluation</th></tr></thead>
+      <tbody id="itemsBodyD"></tbody>
+    </table>
+    <div class="sig-row">
+      <div class="field"><label>Team Member Name / Signature (type name)</label><input type="text" id="sigD_member"></div>
+      <div class="field"><label>Date</label><input type="date" id="sigD_member_date"></div>
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Designated Trainer/Leader Signature (type name)</label><input type="text" id="sigD_trainer"></div>
+      <div class="field"><label>Date</label><input type="date" id="sigD_trainer_date"></div>
+    </div>
+  </div>
+
+  <div class="card" id="sectionE">
+    <h2>Section E — Filtering Face Mask / Particulate Respirator Training &amp; Competency</h2>
+    <div class="sub">D = Didactic. R/D = Return Demonstration. Required for all team members providing direct patient care.</div>
+    <div class="field">
+      <label>Type of Review</label>
+      <select id="respType"><option>Initial</option><option>Annual</option></select>
+    </div>
+    <table class="items">
+      <thead><tr><th style="width:55%">Competency Area</th><th style="width:45%">Validation</th></tr></thead>
+      <tbody id="itemsBodyE"></tbody>
+    </table>
+    <div class="attest" style="margin-top:10px;">
+      By signing below, the trainer/leader certifies training was provided on the above items and the team member is prepared to perform these procedures independently and will comply with clinical protocol and safety requirements.
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Team Member Signature (type name)</label><input type="text" id="sigE_member"></div>
+      <div class="field"><label>Date</label><input type="date" id="sigE_member_date"></div>
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Designated Trainer/Leader Signature (type name)</label><input type="text" id="sigE_trainer"></div>
+      <div class="field"><label>Date</label><input type="date" id="sigE_trainer_date"></div>
+    </div>
+  </div>
+
+  <div class="card" id="sectionF">
+    <h2>Section F — Conclusion of Orientation &amp; Onboarding</h2>
+    <div class="attest">
+      <strong>Attestation for New Team Member:</strong> By my signature, I attest I have completed all the required training and learning experiences as outlined in the Home Health <span class="disc-name" id="discNameF"></span> Onboarding Guide. During the onboarding program, I had the opportunity to ask questions, to work with direct peers and leaders, and to work with patients under the direct supervision of others. I attest I feel prepared and ready for the role and am ready to practice independently with appropriate indirect supervision. I understand I can always seek additional support, clarification, and skills training from my peers and leaders.
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Team Member Printed Name</label><input type="text" id="sigF_member_print"></div>
+      <div class="field"><label>Signature Date</label><input type="date" id="sigF_member_date"></div>
+    </div>
+    <div class="field"><label>Team Member Signature (type name)</label><input type="text" id="sigF_member_sig"></div>
+
+    <div class="attest" style="margin-top:14px;">
+      <strong>Attestation for New Team Member's Direct Leader:</strong> By my signature, I attest the above-named team member has completed all required training and learning experiences as outlined in the Home Health <span class="disc-name" id="discNameF2"></span> Onboarding Guide, had the opportunity to ask questions and work with peers/leaders and patients under direct supervision, and is prepared and ready to practice independently with appropriate indirect supervision.
+    </div>
+    <div class="sig-row">
+      <div class="field"><label>Leader's Printed Name</label><input type="text" id="sigF_leader_print"></div>
+      <div class="field"><label>Signature Date</label><input type="date" id="sigF_leader_date"></div>
+    </div>
+    <div class="field"><label>Leader Signature (type name)</label><input type="text" id="sigF_leader_sig"></div>
+    <div class="note">Attestation must be uploaded to Cred Track along with the completed competency forms and onboarding checklist.</div>
+  </div>
+
+  <div class="action-bar">
+    <button class="primary" id="generateBtn">Generate Completed Fillable PDF</button>
+    <div class="status" id="statusMsg"></div>
+  </div>
+
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
