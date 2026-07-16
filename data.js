@@ -1,5 +1,5 @@
 // Metro Mobile Health Care — Clinical Competency & Onboarding Checklist data
-// Exported from the live tool on 2026-07-13T04:56:01.344Z
+// Exported from the live tool on 2026-07-13T04:56:01.344Z; SLP discipline added 2026-07-16.
 // Reflects the current curated item lists (removed items excluded, edits applied).
 // Replace data.js in the mmhc-skills repo with this file to make these the
 // permanent defaults for everyone.
@@ -102,6 +102,37 @@ const DISCIPLINES = {
       "Communicates with PT to revise patient specific goals as necessary and documents discharge planning",
       "Documents patient's progress towards goals",
       "HEP instruction documentation",
+      "Has fundamental knowledge of home safety and safety precautions",
+      "Able to determine the learning needs of patient/caregiver",
+      "Able to effectively teach adult learners",
+      "Able to evaluate effectiveness of teaching and teach back response",
+      "Utilizes appropriate teaching material as determined by patient needs",
+      "Utilizes appropriate standardized assessments and interprets results"
+    ]
+  },
+  SLP: {
+    label: "SLP",
+    fullName: "Speech-Language Pathologist",
+    items: [
+      "Utilizes liquid hand sanitizer before and after patient contact or washes hands with soap/water if visibly soiled",
+      "Donning/Doffing appropriate PPE for: Contact Precautions, Droplet Precautions",
+      "Bag Protocol",
+      "Trunk Protocol",
+      "Explains patient/client rights, advance directives, hotline, and other agency requirements",
+      "Conducts a physical assessment, vital signs including correct measurement of apical, radial, and pedal pulses",
+      "Performs Medication Reconciliation accurately",
+      "Verbalizes understanding of emergency plan",
+      "Completes Plan of Care with knowledge to meet patient needs/goals while supporting homebound status, eligibility criteria, skilled need and medical necessity",
+      "Documents according to Plan of Care and communications and coordinates with interdisciplinary team",
+      "Establishes and revises patient specific goals and documents discharge planning",
+      "Develops reasonable, measurable, patient specific interventions/goals",
+      "Documents patient's progress towards goals",
+      "Performs oral mechanism/swallow examination and identifies signs/symptoms of aspiration",
+      "Recommends and documents diet/liquid consistency modifications and swallowing strategies per assessment findings",
+      "Assesses and documents cognitive-communication status (attention, memory, problem solving, safety awareness)",
+      "Assesses and documents speech, language, voice and/or fluency status using appropriate standardized measures",
+      "Identifies need for and trains patient/caregiver on augmentative/alternative communication (AAC) strategies or devices as applicable",
+      "HEP/home exercise and carryover program instruction documentation",
       "Has fundamental knowledge of home safety and safety precautions",
       "Able to determine the learning needs of patient/caregiver",
       "Able to effectively teach adult learners",
