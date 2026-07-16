@@ -1,5 +1,5 @@
 // Metro Mobile Health Care — Clinical Competency & Onboarding Checklist data
-// Exported from the live tool on 2026-07-13T04:56:01.344Z; SLP discipline added 2026-07-16.
+// Exported from the live tool on 2026-07-16T23:40:19.983Z
 // Reflects the current curated item lists (removed items excluded, edits applied).
 // Replace data.js in the mmhc-skills repo with this file to make these the
 // permanent defaults for everyone.
@@ -163,28 +163,18 @@ const OBSERVATION_ITEMS = [
 const CAR_STOCK_ITEMS = [
   "Car Clean Area/Car Stock Box - Demonstrates maintenance of clean and organized car area, ensuring all required supplies are available and appropriately stored",
   "Clinician's Bag – placed on leak proof barrier",
-  "Face Shield/Goggles/Glasses",
-  "Biohazard Bag",
   "Clinician's Bag - remains stocked with required equipment and supplies; supplies are not expired and follows appropriate infection control procedure",
   "Alcohol Pads",
   "Hand Sanitizer (70%) - Placed in outside pocket",
   "Sani Wipes - OR approved cleaning wipe",
-  "Liquid Soap & Paper Towels",
   "Barriers",
   "Thermometer & covers",
   "BP Cuff",
   "SAT Monitor",
   "Stethoscope",
   "Gown/Mask/Gloves",
-  "Biohazard Bags & Specimen bags",
-  "Trash Bags - Minimum of 4",
-  "Optional - Zip Lock Bags - Gallon size",
-  "Expired Supplies",
   "Car Dirty Area - Maintains a designated dirty area ensuring proper containment, disposal, and compliance with infection control protocols",
-  "Sharps Container - Do Not exceed 3/4 full",
-  "Insulated Specimen Container w/ Biohazard Labels & Ice Pack (soft container must have hard/leak-proof insert with lid)",
-  "Other: ______________",
-  "Other: ______________"
+  "Insulated Specimen Container w/ Biohazard Labels & Ice Pack (soft container must have hard/leak-proof insert with lid)"
 ];
 const PPE_ITEMS = [
   "Expected Outcomes: Infection prevention practices followed; staff competent with PPE and protocols; staff perform hand hygiene per policy before/after PPE use",
